@@ -1,1 +1,919 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNO Matematika - FPB & KPK</title>
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --panel:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --accent:#f59e0b;
+      --danger:#dc2626;
+      --success:#16a34a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:white;
+    }
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .screen{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .panel{
+      width:min(960px,100%);
+      background:rgba(255,255,255,.97);
+      color:var(--text);
+      border-radius:24px;
+      padding:24px;
+      box-shadow:0 22px 70px rgba(0,0,0,.35);
+    }
+    h1,h2,h3,p{margin-top:0}
+    .title{
+      text-align:center;
+      font-size:clamp(30px,5vw,54px);
+      margin-bottom:8px;
+    }
+    .subtitle{
+      text-align:center;
+      color:var(--muted);
+      margin-bottom:24px;
+    }
+    .setup-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+    label{
+      display:block;
+      font-weight:700;
+      margin-bottom:7px;
+    }
+    select,input{
+      width:100%;
+      border:2px solid #cbd5e1;
+      border-radius:12px;
+      padding:12px 14px;
+      outline:none;
+      background:white;
+    }
+    select:focus,input:focus{border-color:#2563eb}
+    .players-box{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .primary{
+      border:none;
+      border-radius:14px;
+      padding:13px 20px;
+      background:#2563eb;
+      color:white;
+      font-weight:700;
+      box-shadow:0 8px 20px rgba(37,99,235,.25);
+    }
+    .primary:hover{filter:brightness(1.07)}
+    .secondary{
+      border:none;
+      border-radius:12px;
+      padding:10px 16px;
+      background:#e2e8f0;
+      color:#0f172a;
+      font-weight:700;
+    }
+    .rules{
+      margin-top:20px;
+      padding:16px;
+      border-radius:16px;
+      background:#f8fafc;
+      color:#334155;
+      line-height:1.55;
+    }
+    .game{
+      width:min(1200px,100%);
+      padding:16px;
+    }
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .turn-info{
+      background:rgba(255,255,255,.94);
+      color:var(--text);
+      padding:12px 18px;
+      border-radius:16px;
+      font-weight:800;
+    }
+    .scoreboard{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .player-chip{
+      background:rgba(255,255,255,.17);
+      border:2px solid rgba(255,255,255,.35);
+      padding:8px 12px;
+      border-radius:999px;
+    }
+    .player-chip.active{
+      background:#f59e0b;
+      border-color:#fde68a;
+      color:#111827;
+      font-weight:800;
+    }
+    .table{
+      min-height:340px;
+      border:3px solid rgba(255,255,255,.25);
+      background:radial-gradient(circle at center,#15803d,#14532d);
+      border-radius:30px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:18px;
+      padding:24px;
+      box-shadow:inset 0 0 60px rgba(0,0,0,.25);
+    }
+    .piles{
+      display:flex;
+      gap:28px;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    .deck{
+      width:120px;
+      height:174px;
+      border-radius:18px;
+      border:6px solid white;
+      background:repeating-linear-gradient(45deg,#111827 0 14px,#ef4444 14px 28px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:26px;
+      font-weight:900;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      user-select:none;
+    }
+    .deck:hover{transform:translateY(-3px)}
+    .card{
+      width:120px;
+      height:174px;
+      border-radius:18px;
+      border:6px solid white;
+      color:white;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      user-select:none;
+      transition:.15s ease;
+      position:relative;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      width:95px;
+      height:120px;
+      background:rgba(255,255,255,.22);
+      border-radius:50%;
+      transform:rotate(22deg);
+      left:7px;
+      top:26px;
+    }
+    .card > *{position:relative;z-index:1}
+    .hand .card:hover{
+      transform:translateY(-12px) rotate(-1deg);
+    }
+    .card.disabled{
+      opacity:.45;
+      filter:grayscale(.35);
+    }
+    .card.disabled:hover{transform:none}
+    .red{background:#dc2626}
+    .blue{background:#2563eb}
+    .green{background:#16a34a}
+    .yellow{background:#eab308;color:#111827}
+    .wild{background:conic-gradient(#dc2626 0 25%,#2563eb 25% 50%,#16a34a 50% 75%,#eab308 75%)}
+    .corner{
+      font-size:15px;
+      font-weight:900;
+    }
+    .center{
+      text-align:center;
+      font-weight:900;
+      font-size:17px;
+      line-height:1.25;
+    }
+    .answer-mini{
+      text-align:right;
+      font-size:12px;
+      font-weight:700;
+      opacity:.9;
+    }
+    .status{
+      min-height:26px;
+      font-weight:800;
+      text-align:center;
+      background:rgba(255,255,255,.9);
+      color:#0f172a;
+      padding:8px 14px;
+      border-radius:12px;
+    }
+    .hand-wrap{
+      margin-top:16px;
+      background:rgba(255,255,255,.96);
+      color:var(--text);
+      border-radius:24px;
+      padding:18px;
+    }
+    .hand-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .hand{
+      display:flex;
+      gap:12px;
+      overflow-x:auto;
+      padding:12px 4px 18px;
+      min-height:205px;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top:12px;
+    }
+    .draw-btn{
+      background:#f59e0b;
+      color:#111827;
+      border:none;
+      padding:11px 18px;
+      border-radius:12px;
+      font-weight:900;
+    }
+    .uno-btn{
+      background:#dc2626;
+      color:white;
+      border:none;
+      padding:11px 18px;
+      border-radius:12px;
+      font-weight:900;
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.88);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:20;
+    }
+    .modal{
+      width:min(520px,100%);
+      background:white;
+      color:var(--text);
+      border-radius:22px;
+      padding:24px;
+      text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+    .question{
+      font-size:30px;
+      font-weight:900;
+      margin:16px 0;
+    }
+    .feedback{
+      min-height:24px;
+      font-weight:800;
+      margin:10px 0;
+    }
+    .feedback.good{color:var(--success)}
+    .feedback.bad{color:var(--danger)}
+    .color-options{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    .color-choice{
+      border:4px solid white;
+      outline:2px solid #cbd5e1;
+      height:70px;
+      border-radius:14px;
+    }
+    .winner{
+      font-size:48px;
+      margin-bottom:8px;
+    }
+    .small{font-size:13px;color:var(--muted)}
+    @media(max-width:680px){
+      .setup-grid,.players-box{grid-template-columns:1fr}
+      .card,.deck{width:104px;height:152px}
+      .center{font-size:15px}
+      .table{min-height:300px;padding:16px}
+      .color-options{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
 
+<section id="setupScreen" class="screen">
+  <div class="panel">
+    <h1 class="title">UNO Matematika</h1>
+    <p class="subtitle">Latihan menentukan FPB dan KPK dalam mode versus atau multiplayer lokal.</p>
+
+    <div class="setup-grid">
+      <div>
+        <label for="mode">Mode permainan</label>
+        <select id="mode">
+          <option value="2">Versus — 2 pemain</option>
+          <option value="3">Multiplayer — 3 pemain</option>
+          <option value="4">Multiplayer — 4 pemain</option>
+        </select>
+      </div>
+      <div>
+        <label for="difficulty">Tingkat kesulitan</label>
+        <select id="difficulty">
+          <option value="easy">Mudah — bilangan 2 sampai 20</option>
+          <option value="medium" selected>Sedang — bilangan 4 sampai 40</option>
+          <option value="hard">Sulit — bilangan 8 sampai 70</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="playersBox" class="players-box"></div>
+
+    <div style="text-align:center;margin-top:20px">
+      <button id="startBtn" class="primary">Mulai Permainan</button>
+    </div>
+
+    <div class="rules">
+      <strong>Aturan singkat:</strong> pilih kartu dengan warna atau jenis operasi yang sama dengan kartu di meja.
+      Kartu FPB/KPK hanya dapat dibuang setelah jawaban benar. Jawaban salah membuat pemain mengambil satu kartu
+      dan kehilangan giliran. Pemain pertama yang menghabiskan kartu menjadi pemenang.
+    </div>
+  </div>
+</section>
+
+<section id="gameScreen" class="screen hidden">
+  <div class="game">
+    <div class="topbar">
+      <div id="turnInfo" class="turn-info"></div>
+      <div id="scoreboard" class="scoreboard"></div>
+      <button id="restartBtn" class="secondary">Ulangi</button>
+    </div>
+
+    <div class="table">
+      <div class="piles">
+        <div id="deckPile" class="deck" title="Ambil kartu">UNO</div>
+        <div id="discardPile"></div>
+      </div>
+      <div id="status" class="status">Permainan dimulai.</div>
+    </div>
+
+    <div class="hand-wrap">
+      <div class="hand-head">
+        <h2 id="handTitle" style="margin:0"></h2>
+        <span id="directionInfo" class="small"></span>
+      </div>
+      <div id="hand" class="hand"></div>
+      <div class="actions">
+        <button id="drawBtn" class="draw-btn">Ambil Kartu</button>
+        <button id="unoBtn" class="uno-btn">UNO!</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="passOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2>Ganti Pemain</h2>
+    <p>Berikan perangkat kepada:</p>
+    <div id="nextPlayerName" class="question"></div>
+    <button id="readyBtn" class="primary">Saya Siap</button>
+  </div>
+</div>
+
+<div id="questionOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2>Jawab Sebelum Membuang Kartu</h2>
+    <div id="questionText" class="question"></div>
+    <input id="answerInput" type="number" inputmode="numeric" placeholder="Masukkan jawaban" />
+    <div id="feedback" class="feedback"></div>
+    <button id="submitAnswerBtn" class="primary">Periksa Jawaban</button>
+    <button id="cancelQuestionBtn" class="secondary" style="margin-left:8px">Batal</button>
+  </div>
+</div>
+
+<div id="colorOverlay" class="overlay hidden">
+  <div class="modal">
+    <h2>Pilih Warna</h2>
+    <p>Warna pilihan akan menjadi warna aktif berikutnya.</p>
+    <div class="color-options">
+      <button class="color-choice red" data-color="red" aria-label="Merah"></button>
+      <button class="color-choice blue" data-color="blue" aria-label="Biru"></button>
+      <button class="color-choice green" data-color="green" aria-label="Hijau"></button>
+      <button class="color-choice yellow" data-color="yellow" aria-label="Kuning"></button>
+    </div>
+  </div>
+</div>
+
+<div id="winnerOverlay" class="overlay hidden">
+  <div class="modal">
+    <div class="winner">🏆</div>
+    <h2 id="winnerText"></h2>
+    <p id="winnerDetail"></p>
+    <button id="playAgainBtn" class="primary">Main Lagi</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const COLORS = ["red","blue","green","yellow"];
+  const COLOR_NAMES = {red:"Merah",blue:"Biru",green:"Hijau",yellow:"Kuning"};
+
+  const state = {
+    players: [],
+    deck: [],
+    discard: [],
+    current: 0,
+    direction: 1,
+    activeColor: null,
+    selectedCardIndex: null,
+    pendingCard: null,
+    hasDrawn: false,
+    unoCalled: false,
+    difficulty: "medium",
+    gameOver: false
+  };
+
+  const el = id => document.getElementById(id);
+  const setupScreen = el("setupScreen");
+  const gameScreen = el("gameScreen");
+  const mode = el("mode");
+  const difficulty = el("difficulty");
+  const playersBox = el("playersBox");
+  const hand = el("hand");
+  const status = el("status");
+  const passOverlay = el("passOverlay");
+  const questionOverlay = el("questionOverlay");
+  const colorOverlay = el("colorOverlay");
+  const winnerOverlay = el("winnerOverlay");
+  const answerInput = el("answerInput");
+  const feedback = el("feedback");
+
+  function gcd(a,b){
+    while(b){ [a,b] = [b,a%b]; }
+    return a;
+  }
+
+  function lcm(a,b){
+    return Math.abs(a*b)/gcd(a,b);
+  }
+
+  function rand(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;
+  }
+
+  function getRange(){
+    if(state.difficulty === "easy") return [2,20];
+    if(state.difficulty === "hard") return [8,70];
+    return [4,40];
+  }
+
+  function makeMathCard(color, operation){
+    const [min,max] = getRange();
+    let a,b,ans;
+    do{
+      a = rand(min,max);
+      b = rand(min,max);
+      ans = operation === "FPB" ? gcd(a,b) : lcm(a,b);
+    }while(a === b || (operation === "KPK" && ans > 600));
+
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+      type:"math",
+      color,
+      operation,
+      a,
+      b,
+      answer:ans
+    };
+  }
+
+  function makeActionCard(color, action){
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+      type:"action",
+      color,
+      action
+    };
+  }
+
+  function makeWild(action="wild"){
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+      type:"wild",
+      color:"wild",
+      action
+    };
+  }
+
+  function buildDeck(){
+    const deck = [];
+    COLORS.forEach(color => {
+      for(let i=0;i<5;i++) deck.push(makeMathCard(color,"FPB"));
+      for(let i=0;i<5;i++) deck.push(makeMathCard(color,"KPK"));
+      deck.push(makeActionCard(color,"skip"));
+      deck.push(makeActionCard(color,"reverse"));
+      deck.push(makeActionCard(color,"draw2"));
+    });
+    for(let i=0;i<4;i++) deck.push(makeWild("wild"));
+    return shuffle(deck);
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function renderPlayerInputs(){
+    const n = Number(mode.value);
+    playersBox.innerHTML = "";
+    for(let i=0;i<n;i++){
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+        <label for="player${i}">Nama pemain ${i+1}</label>
+        <input id="player${i}" value="Pemain ${i+1}" maxlength="18">
+      `;
+      playersBox.appendChild(wrap);
+    }
+  }
+
+  function startGame(){
+    const n = Number(mode.value);
+    state.players = [];
+    for(let i=0;i<n;i++){
+      const name = el(`player${i}`).value.trim() || `Pemain ${i+1}`;
+      state.players.push({name,hand:[]});
+    }
+
+    state.difficulty = difficulty.value;
+    state.deck = buildDeck();
+    state.discard = [];
+    state.current = 0;
+    state.direction = 1;
+    state.activeColor = null;
+    state.hasDrawn = false;
+    state.unoCalled = false;
+    state.gameOver = false;
+
+    for(let r=0;r<7;r++){
+      state.players.forEach(p => p.hand.push(drawFromDeck()));
+    }
+
+    let first;
+    do{
+      first = drawFromDeck();
+      if(first.type !== "math"){
+        state.deck.unshift(first);
+        shuffle(state.deck);
+      }
+    }while(first.type !== "math");
+
+    state.discard.push(first);
+    state.activeColor = first.color;
+
+    setupScreen.classList.add("hidden");
+    gameScreen.classList.remove("hidden");
+    showPassScreen();
+  }
+
+  function drawFromDeck(){
+    if(state.deck.length === 0){
+      const top = state.discard.pop();
+      state.deck = shuffle(state.discard.splice(0));
+      state.discard = [top];
+    }
+    return state.deck.pop();
+  }
+
+  function currentPlayer(){
+    return state.players[state.current];
+  }
+
+  function topCard(){
+    return state.discard[state.discard.length-1];
+  }
+
+  function isPlayable(card){
+    const top = topCard();
+    if(card.type === "wild") return true;
+    if(card.color === state.activeColor) return true;
+
+    if(card.type === "math" && top.type === "math"){
+      return card.operation === top.operation;
+    }
+
+    if(card.type === "action" && top.type === "action"){
+      return card.action === top.action;
+    }
+    return false;
+  }
+
+  function cardLabel(card){
+    if(card.type === "math"){
+      return `${card.operation}(${card.a}, ${card.b})`;
+    }
+    if(card.type === "wild") return "BEBAS";
+    return card.action === "skip" ? "LEWATI" :
+           card.action === "reverse" ? "BALIK" : "+2";
+  }
+
+  function createCardElement(card,index,clickable=false){
+    const div = document.createElement("div");
+    div.className = `card ${card.color}`;
+    if(clickable && !isPlayable(card)) div.classList.add("disabled");
+    div.innerHTML = `
+      <div class="corner">${card.type === "math" ? card.operation : "UNO"}</div>
+      <div class="center">${cardLabel(card)}</div>
+      <div class="answer-mini">${card.type === "math" ? "Jawab dulu" : "Kartu aksi"}</div>
+    `;
+    if(clickable){
+      div.addEventListener("click",() => attemptPlay(index));
+    }
+    return div;
+  }
+
+  function render(){
+    const p = currentPlayer();
+    el("turnInfo").textContent = `Giliran: ${p.name}`;
+    el("handTitle").textContent = `Kartu ${p.name} (${p.hand.length})`;
+    el("directionInfo").textContent =
+      `Arah: ${state.direction === 1 ? "searah jarum jam" : "berlawanan"} • Warna aktif: ${COLOR_NAMES[state.activeColor] || "Bebas"}`;
+
+    const score = el("scoreboard");
+    score.innerHTML = "";
+    state.players.forEach((pl,i) => {
+      const chip = document.createElement("div");
+      chip.className = "player-chip" + (i===state.current ? " active" : "");
+      chip.textContent = `${pl.name}: ${pl.hand.length} kartu`;
+      score.appendChild(chip);
+    });
+
+    const pile = el("discardPile");
+    pile.innerHTML = "";
+    pile.appendChild(createCardElement(topCard(),null,false));
+
+    hand.innerHTML = "";
+    p.hand.forEach((card,i) => hand.appendChild(createCardElement(card,i,true)));
+  }
+
+  function attemptPlay(index){
+    if(state.gameOver) return;
+    const card = currentPlayer().hand[index];
+    if(!isPlayable(card)){
+      setStatus("Kartu tidak cocok. Samakan warna, operasi, atau jenis kartu aksi.");
+      return;
+    }
+
+    state.selectedCardIndex = index;
+    state.pendingCard = card;
+
+    if(card.type === "math"){
+      el("questionText").textContent = `${card.operation} dari ${card.a} dan ${card.b} adalah ...`;
+      answerInput.value = "";
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      questionOverlay.classList.remove("hidden");
+      setTimeout(() => answerInput.focus(),100);
+    }else{
+      playSelectedCard();
+    }
+  }
+
+  function checkAnswer(){
+    const value = Number(answerInput.value);
+    if(answerInput.value.trim() === ""){
+      feedback.textContent = "Masukkan jawaban terlebih dahulu.";
+      feedback.className = "feedback bad";
+      return;
+    }
+
+    if(value === state.pendingCard.answer){
+      feedback.textContent = "Benar!";
+      feedback.className = "feedback good";
+      setTimeout(() => {
+        questionOverlay.classList.add("hidden");
+        playSelectedCard();
+      },350);
+    }else{
+      feedback.textContent = `Belum tepat. Jawaban yang benar: ${state.pendingCard.answer}. Ambil 1 kartu.`;
+      feedback.className = "feedback bad";
+      currentPlayer().hand.push(drawFromDeck());
+      render();
+      setTimeout(() => {
+        questionOverlay.classList.add("hidden");
+        endTurn("Jawaban salah. Pemain mengambil 1 kartu.");
+      },900);
+    }
+  }
+
+  function playSelectedCard(){
+    const p = currentPlayer();
+    const card = p.hand.splice(state.selectedCardIndex,1)[0];
+    state.discard.push(card);
+    if(card.color !== "wild") state.activeColor = card.color;
+
+    if(p.hand.length === 1 && !state.unoCalled){
+      setStatus(`${p.name} tinggal memiliki 1 kartu. Tekan tombol UNO!`);
+    }
+
+    if(p.hand.length === 0){
+      finishGame(p);
+      return;
+    }
+
+    if(card.type === "wild"){
+      colorOverlay.classList.remove("hidden");
+      return;
+    }
+
+    applyCardEffect(card);
+  }
+
+  function applyCardEffect(card){
+    if(card.type !== "action"){
+      endTurn(`${currentPlayer().name} berhasil membuang kartu ${cardLabel(card)}.`);
+      return;
+    }
+
+    if(card.action === "reverse"){
+      if(state.players.length === 2){
+        advanceTurn();
+      }else{
+        state.direction *= -1;
+      }
+      endTurn("Arah permainan dibalik.");
+      return;
+    }
+
+    if(card.action === "skip"){
+      advanceTurn();
+      endTurn("Pemain berikutnya dilewati.");
+      return;
+    }
+
+    if(card.action === "draw2"){
+      advanceTurn();
+      const target = currentPlayer();
+      target.hand.push(drawFromDeck(),drawFromDeck());
+      endTurn(`${target.name} mengambil 2 kartu dan kehilangan giliran.`);
+    }
+  }
+
+  function chooseColor(color){
+    state.activeColor = color;
+    colorOverlay.classList.add("hidden");
+    endTurn(`Warna aktif berubah menjadi ${COLOR_NAMES[color]}.`);
+  }
+
+  function drawCard(){
+    if(state.gameOver || state.hasDrawn) return;
+    const card = drawFromDeck();
+    currentPlayer().hand.push(card);
+    state.hasDrawn = true;
+    render();
+
+    if(isPlayable(card)){
+      setStatus(`${currentPlayer().name} mengambil kartu yang bisa dimainkan. Pilih kartu tersebut atau akhiri giliran dengan mengambil lagi.`);
+      setTimeout(() => {
+        if(state.hasDrawn && !state.gameOver){
+          endTurn(`${currentPlayer().name} mengambil 1 kartu.`);
+        }
+      }, 1800);
+    }else{
+      endTurn(`${currentPlayer().name} mengambil 1 kartu.`);
+    }
+  }
+
+  function callUno(){
+    const p = currentPlayer();
+    if(p.hand.length === 1){
+      state.unoCalled = true;
+      setStatus(`${p.name} berkata UNO!`);
+    }else{
+      p.hand.push(drawFromDeck());
+      setStatus(`UNO belum boleh. ${p.name} mengambil 1 kartu penalti.`);
+      render();
+    }
+  }
+
+  function advanceTurn(){
+    const n = state.players.length;
+    state.current = (state.current + state.direction + n) % n;
+  }
+
+  function endTurn(message){
+    setStatus(message);
+    state.hasDrawn = false;
+    state.unoCalled = false;
+    state.pendingCard = null;
+    state.selectedCardIndex = null;
+    advanceTurn();
+    render();
+    setTimeout(showPassScreen,500);
+  }
+
+  function showPassScreen(){
+    if(state.gameOver) return;
+    el("nextPlayerName").textContent = currentPlayer().name;
+    passOverlay.classList.remove("hidden");
+  }
+
+  function ready(){
+    passOverlay.classList.add("hidden");
+    render();
+    setStatus(`Giliran ${currentPlayer().name}. Pilih kartu yang cocok atau ambil kartu.`);
+  }
+
+  function finishGame(player){
+    state.gameOver = true;
+    render();
+    el("winnerText").textContent = `${player.name} Menang!`;
+    const remaining = state.players
+      .filter(p => p !== player)
+      .map(p => `${p.name}: ${p.hand.length} kartu`)
+      .join(" • ");
+    el("winnerDetail").textContent = remaining;
+    winnerOverlay.classList.remove("hidden");
+  }
+
+  function setStatus(message){
+    status.textContent = message;
+  }
+
+  function resetToSetup(){
+    winnerOverlay.classList.add("hidden");
+    questionOverlay.classList.add("hidden");
+    colorOverlay.classList.add("hidden");
+    passOverlay.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    setupScreen.classList.remove("hidden");
+    renderPlayerInputs();
+  }
+
+  mode.addEventListener("change",renderPlayerInputs);
+  el("startBtn").addEventListener("click",startGame);
+  el("readyBtn").addEventListener("click",ready);
+  el("submitAnswerBtn").addEventListener("click",checkAnswer);
+  answerInput.addEventListener("keydown",e => {
+    if(e.key === "Enter") checkAnswer();
+  });
+  el("cancelQuestionBtn").addEventListener("click",() => {
+    questionOverlay.classList.add("hidden");
+  });
+  document.querySelectorAll(".color-choice").forEach(btn => {
+    btn.addEventListener("click",() => chooseColor(btn.dataset.color));
+  });
+  el("drawBtn").addEventListener("click",drawCard);
+  el("deckPile").addEventListener("click",drawCard);
+  el("unoBtn").addEventListener("click",callUno);
+  el("restartBtn").addEventListener("click",resetToSetup);
+  el("playAgainBtn").addEventListener("click",resetToSetup);
+
+  renderPlayerInputs();
+})();
+</script>
+</body>
+</html>

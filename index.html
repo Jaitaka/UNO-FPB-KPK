@@ -471,7 +471,8 @@
     hasDrawn: false,
     unoCalled: false,
     difficulty: "medium",
-    gameOver: false
+    gameOver: false,
+    handVisible: false
   };
 
   const el = id => document.getElementById(id);
@@ -597,6 +598,7 @@
     state.hasDrawn = false;
     state.unoCalled = false;
     state.gameOver = false;
+    state.handVisible = false;
 
     for(let r=0;r<7;r++){
       state.players.forEach(p => p.hand.push(drawFromDeck()));
@@ -678,7 +680,6 @@
   function render(){
     const p = currentPlayer();
     el("turnInfo").textContent = `Giliran: ${p.name}`;
-    el("handTitle").textContent = `Kartu ${p.name} (${p.hand.length})`;
     el("directionInfo").textContent =
       `Arah: ${state.direction === 1 ? "searah jarum jam" : "berlawanan"} • Warna aktif: ${COLOR_NAMES[state.activeColor] || "Bebas"}`;
 
@@ -696,11 +697,24 @@
     pile.appendChild(createCardElement(topCard(),null,false));
 
     hand.innerHTML = "";
+    el("drawBtn").disabled = !state.handVisible;
+    el("unoBtn").disabled = !state.handVisible;
+
+    if(!state.handVisible){
+      el("handTitle").textContent = "Kartu disembunyikan";
+      const privacyMessage = document.createElement("div");
+      privacyMessage.style.cssText = "width:100%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;color:#64748b;font-size:18px;";
+      privacyMessage.textContent = "Tekan Saya Siap untuk melihat kartu pemain berikutnya.";
+      hand.appendChild(privacyMessage);
+      return;
+    }
+
+    el("handTitle").textContent = `Kartu ${p.name} (${p.hand.length})`;
     p.hand.forEach((card,i) => hand.appendChild(createCardElement(card,i,true)));
   }
 
   function attemptPlay(index){
-    if(state.gameOver) return;
+    if(state.gameOver || !state.handVisible) return;
     const card = currentPlayer().hand[index];
     if(!isPlayable(card)){
       setStatus("Kartu tidak cocok. Samakan warna, operasi, atau jenis kartu aksi.");
@@ -809,7 +823,7 @@
   }
 
   function drawCard(){
-    if(state.gameOver || state.hasDrawn) return;
+    if(state.gameOver || state.hasDrawn || !state.handVisible) return;
     const card = drawFromDeck();
     currentPlayer().hand.push(card);
     state.hasDrawn = true;
@@ -828,6 +842,7 @@
   }
 
   function callUno(){
+    if(!state.handVisible) return;
     const p = currentPlayer();
     if(p.hand.length === 1){
       state.unoCalled = true;
@@ -850,6 +865,9 @@
     state.unoCalled = false;
     state.pendingCard = null;
     state.selectedCardIndex = null;
+
+    // Sembunyikan kartu sebelum berpindah ke pemain berikutnya agar tidak sempat terlihat.
+    state.handVisible = false;
     advanceTurn();
     render();
     setTimeout(showPassScreen,500);
@@ -857,11 +875,14 @@
 
   function showPassScreen(){
     if(state.gameOver) return;
+    state.handVisible = false;
+    render();
     el("nextPlayerName").textContent = currentPlayer().name;
     passOverlay.classList.remove("hidden");
   }
 
   function ready(){
+    state.handVisible = true;
     passOverlay.classList.add("hidden");
     render();
     setStatus(`Giliran ${currentPlayer().name}. Pilih kartu yang cocok atau ambil kartu.`);
